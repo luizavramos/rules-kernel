@@ -1,7 +1,7 @@
 # T201 — Spike do cel-java (spec 002)
 
 **Resultado: passou, com um desvio do plano (custo).** Versão testada: `dev.cel:cel:0.15.0` (a mais recente no Maven Central em 2026-11-14).
-Testes do spike: `CelSpikeTest` e `CelSpikeFunctionsTest` (6 testes, descartáveis depois da T205).
+Os testes do spike foram removidos na T207: o que provavam está coberto por `RuleCompilerTest`, `CompiledRuleSetTest` e `InitialRulesTest`.
 
 ## O que funcionou
 | Necessidade | Resultado |

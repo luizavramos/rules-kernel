@@ -20,6 +20,10 @@ class KernelArchitectureTest {
             .should().dependOnClassesThat().resideInAnyPackage("dev.cel..", "..kernel.compiler..");
 
     @ArchTest
+    static final ArchRule avaliacaoNaoConheceCel = noClasses().that().resideInAPackage("..kernel.evaluation..")
+            .should().dependOnClassesThat().resideInAnyPackage("dev.cel..", "..kernel.compiler..");
+
+    @ArchTest
     static final ArchRule semFramework = noClasses().that().resideInAPackage("..kernel..")
             .should().dependOnClassesThat().resideInAnyPackage("org.springframework..", "jakarta..", "org.apache.kafka..");
 }

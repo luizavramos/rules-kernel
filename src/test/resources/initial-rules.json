@@ -1,0 +1,108 @@
+{
+  "scoring": { "mediumThreshold": 40, "highThreshold": 70 },
+  "rules": [
+    {
+      "ruleId": "R01",
+      "expression": "profile.hoursSinceCredentialChange >= 0 && profile.hoursSinceCredentialChange < params.hours && tx.amount > params.minAmount",
+      "params": { "hours": 24, "minAmount": 100000 },
+      "weight": 35,
+      "reasonTemplate": "Credencial alterada há {profile.hoursSinceCredentialChange} h e valor de {tx.amount} centavos (acima de {params.minAmount})",
+      "cases": [
+        { "name": "credencial trocada há 2 h e valor alto dispara", "context": { "profile.hoursSinceCredentialChange": 2, "tx.amount": 150000 }, "expectedHit": true },
+        { "name": "valor baixo não dispara", "context": { "profile.hoursSinceCredentialChange": 2, "tx.amount": 50000 }, "expectedHit": false },
+        { "name": "troca desconhecida (-1) não dispara", "context": { "profile.hoursSinceCredentialChange": -1, "tx.amount": 150000 }, "expectedHit": false },
+        { "name": "troca há mais de 24 h não dispara", "context": { "profile.hoursSinceCredentialChange": 30, "tx.amount": 150000 }, "expectedHit": false }
+      ]
+    },
+    {
+      "ruleId": "R03",
+      "expression": "features.isNewBeneficiary && tx.amount > params.minAmount",
+      "params": { "minAmount": 200000 },
+      "weight": 25,
+      "reasonTemplate": "Beneficiário novo com valor de {tx.amount} centavos (acima de {params.minAmount})",
+      "cases": [
+        { "name": "beneficiário novo e valor alto dispara", "context": { "features.isNewBeneficiary": true, "tx.amount": 250000 }, "expectedHit": true },
+        { "name": "beneficiário novo com valor baixo não dispara", "context": { "features.isNewBeneficiary": true, "tx.amount": 100000 }, "expectedHit": false },
+        { "name": "beneficiário conhecido não dispara", "context": { "features.isNewBeneficiary": false, "tx.amount": 250000 }, "expectedHit": false }
+      ]
+    },
+    {
+      "ruleId": "R04",
+      "expression": "features.count30d >= params.minHistory && tx.amount > max(params.floor, features.avgAmount30d * params.multiplier)",
+      "params": { "minHistory": 5, "floor": 100000, "multiplier": 5 },
+      "weight": 35,
+      "reasonTemplate": "Valor de {tx.amount} centavos acima de {params.multiplier} vezes a média de 30 dias ({features.avgAmount30d})",
+      "cases": [
+        { "name": "valor acima de 5x a média dispara", "context": { "features.count30d": 40, "features.avgAmount30d": 40000, "tx.amount": 250000 }, "expectedHit": true },
+        { "name": "valor abaixo de 5x a média não dispara", "context": { "features.count30d": 40, "features.avgAmount30d": 40000, "tx.amount": 150000 }, "expectedHit": false },
+        { "name": "média baixa: vale o piso de 100000", "context": { "features.count30d": 40, "features.avgAmount30d": 1000, "tx.amount": 120000 }, "expectedHit": true },
+        { "name": "abaixo do piso não dispara", "context": { "features.count30d": 40, "features.avgAmount30d": 1000, "tx.amount": 90000 }, "expectedHit": false },
+        { "name": "histórico curto não dispara", "context": { "features.count30d": 2, "features.avgAmount30d": 40000, "tx.amount": 250000 }, "expectedHit": false }
+      ]
+    },
+    {
+      "ruleId": "R05",
+      "expression": "tx.hourOfDay < params.endHour && tx.amount > params.minAmount",
+      "params": { "endHour": 6, "minAmount": 100000 },
+      "weight": 15,
+      "reasonTemplate": "Transação de madrugada (hora {tx.hourOfDay}) com valor de {tx.amount} centavos",
+      "cases": [
+        { "name": "madrugada e valor alto dispara", "context": { "tx.hourOfDay": 3, "tx.amount": 150000 }, "expectedHit": true },
+        { "name": "madrugada com valor baixo não dispara", "context": { "tx.hourOfDay": 3, "tx.amount": 50000 }, "expectedHit": false },
+        { "name": "durante o dia não dispara", "context": { "tx.hourOfDay": 14, "tx.amount": 150000 }, "expectedHit": false }
+      ]
+    },
+    {
+      "ruleId": "R07",
+      "expression": "features.count5m > params.maxCount",
+      "params": { "maxCount": 5 },
+      "paramOverrides": { "PJ": { "maxCount": 30 } },
+      "weight": 25,
+      "reasonTemplate": "{features.count5m} transações em 5 min (limite {params.maxCount})",
+      "cases": [
+        { "name": "PF com 6 transações em 5 min dispara", "context": { "profile.segment": "PF", "features.count5m": 6 }, "expectedHit": true },
+        { "name": "PF com 5 transações não dispara", "context": { "profile.segment": "PF", "features.count5m": 5 }, "expectedHit": false },
+        { "name": "PJ com 6 transações não dispara (limite 30)", "context": { "profile.segment": "PJ", "features.count5m": 6 }, "expectedHit": false },
+        { "name": "PJ com 31 transações dispara", "context": { "profile.segment": "PJ", "features.count5m": 31 }, "expectedHit": true }
+      ]
+    },
+    {
+      "ruleId": "R09",
+      "expression": "features.distinctBeneficiaries24h > params.maxDistinct",
+      "params": { "maxDistinct": 10 },
+      "paramOverrides": { "PJ": { "maxDistinct": 100 } },
+      "weight": 30,
+      "reasonTemplate": "{features.distinctBeneficiaries24h} beneficiários distintos em 24 h (limite {params.maxDistinct})",
+      "cases": [
+        { "name": "PF com 11 beneficiários dispara", "context": { "profile.segment": "PF", "features.distinctBeneficiaries24h": 11 }, "expectedHit": true },
+        { "name": "PF com 10 beneficiários não dispara", "context": { "profile.segment": "PF", "features.distinctBeneficiaries24h": 10 }, "expectedHit": false },
+        { "name": "PJ com 11 beneficiários não dispara (limite 100)", "context": { "profile.segment": "PJ", "features.distinctBeneficiaries24h": 11 }, "expectedHit": false },
+        { "name": "PJ com 101 beneficiários dispara", "context": { "profile.segment": "PJ", "features.distinctBeneficiaries24h": 101 }, "expectedHit": true }
+      ]
+    },
+    {
+      "ruleId": "R10",
+      "expression": "lists.counterpartyFlagged",
+      "params": {},
+      "weight": 70,
+      "reasonTemplate": "Contraparte em lista de bloqueio",
+      "cases": [
+        { "name": "contraparte sinalizada dispara", "context": { "lists.counterpartyFlagged": true }, "expectedHit": true },
+        { "name": "contraparte limpa não dispara", "context": { "lists.counterpartyFlagged": false }, "expectedHit": false }
+      ]
+    },
+    {
+      "ruleId": "R12",
+      "expression": "profile.hoursSinceCredentialChange >= 0 && profile.hoursSinceCredentialChange < 24 && features.isNewDevice && features.isNewBeneficiary",
+      "params": {},
+      "weight": 30,
+      "reasonTemplate": "Credencial alterada há menos de 24 h, dispositivo novo e beneficiário novo",
+      "cases": [
+        { "name": "troca recente, dispositivo novo e beneficiário novo dispara", "context": { "profile.hoursSinceCredentialChange": 5, "features.isNewDevice": true, "features.isNewBeneficiary": true }, "expectedHit": true },
+        { "name": "sem dispositivo novo não dispara", "context": { "profile.hoursSinceCredentialChange": 5, "features.isNewDevice": false, "features.isNewBeneficiary": true }, "expectedHit": false },
+        { "name": "troca há mais de 24 h não dispara", "context": { "profile.hoursSinceCredentialChange": 30, "features.isNewDevice": true, "features.isNewBeneficiary": true }, "expectedHit": false },
+        { "name": "troca desconhecida (-1) não dispara", "context": { "profile.hoursSinceCredentialChange": -1, "features.isNewDevice": true, "features.isNewBeneficiary": true }, "expectedHit": false }
+      ]
+    }
+  ]
+}

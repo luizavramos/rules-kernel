@@ -3,6 +3,8 @@ package br.com.motorfraude.rules.kernel.compiler;
 import br.com.motorfraude.rules.kernel.catalog.FeatureCatalog;
 import br.com.motorfraude.rules.kernel.catalog.FeatureType;
 import br.com.motorfraude.rules.kernel.model.RuleDefinition;
+import br.com.motorfraude.rules.kernel.model.RuleSetDefinition;
+import br.com.motorfraude.rules.kernel.model.RuleStatus;
 import dev.cel.common.CelFunctionDecl;
 import dev.cel.common.CelOverloadDecl;
 import dev.cel.common.CelValidationResult;
@@ -15,6 +17,10 @@ import dev.cel.common.types.MapType;
 import dev.cel.common.types.SimpleType;
 import dev.cel.compiler.CelCompiler;
 import dev.cel.compiler.CelCompilerFactory;
+import dev.cel.runtime.CelEvaluationException;
+import dev.cel.runtime.CelFunctionBinding;
+import dev.cel.runtime.CelRuntime;
+import dev.cel.runtime.CelRuntimeFactory;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -39,6 +45,7 @@ public final class RuleCompiler {
 
     private final FeatureCatalog catalog = FeatureCatalog.standardCatalog();
     private final CelCompiler cel;
+    private final CelRuntime runtime;
     private final int maxNodes;
     private final int maxDepth;
 
@@ -55,6 +62,41 @@ public final class RuleCompiler {
         builder.addFunctionDeclarations(CelFunctionDecl.newFunctionDeclaration(MAX_FUNCTION,
                 CelOverloadDecl.newGlobalOverload(MAX_OVERLOAD, SimpleType.INT, SimpleType.INT, SimpleType.INT)));
         this.cel = builder.build();
+        this.runtime = CelRuntimeFactory.standardCelRuntimeBuilder()
+                .addFunctionBindings(CelFunctionBinding.from(MAX_OVERLOAD, Long.class, Long.class, Math::max))
+                .build();
+    }
+
+    /**
+     * Compila as regras ACTIVE e SHADOW do conjunto (DRAFT e DISABLED não entram). Se qualquer uma falhar, lança
+     * {@link RuleSetCompilationException} com o erro de cada uma: o conjunto nunca é publicado pela metade.
+     */
+    public CompiledRuleSet compileAll(RuleSetDefinition set) {
+        var scoring = set.scoring();
+        if (scoring == null || scoring.mediumThreshold() <= 0 || scoring.mediumThreshold() > scoring.highThreshold()) {
+            throw new IllegalArgumentException("scoring inválido: é preciso 0 < média <= alta");
+        }
+        var failures = new ArrayList<CompilationResult>();
+        var compiled = new ArrayList<CompiledRuleSet.CompiledRule>();
+        for (RuleDefinition rule : set.rules()) {
+            if (rule.status() != RuleStatus.ACTIVE && rule.status() != RuleStatus.SHADOW) {
+                continue;
+            }
+            var result = compile(rule);
+            if (!result.valid()) {
+                failures.add(result);
+                continue;
+            }
+            try {
+                compiled.add(new CompiledRuleSet.CompiledRule(rule, runtime.createProgram(astOf(cel.compile(rule.expression())))));
+            } catch (CelEvaluationException e) {
+                failures.add(new CompilationResult(rule.ruleId(), List.of("erro ao preparar a regra: " + e.getMessage())));
+            }
+        }
+        if (!failures.isEmpty()) {
+            throw new RuleSetCompilationException(failures);
+        }
+        return new CompiledRuleSet(set.version(), scoring, compiled);
     }
 
     public CompilationResult compile(RuleDefinition rule) {
