@@ -7,7 +7,6 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
-/** T202 — o CEL fica atrás do compilador: modelo e catálogo não o conhecem, e o kernel não depende de framework. */
 @AnalyzeClasses(packages = "br.com.motorfraude.rules.kernel", importOptions = ImportOption.DoNotIncludeTests.class)
 class KernelArchitectureTest {
 

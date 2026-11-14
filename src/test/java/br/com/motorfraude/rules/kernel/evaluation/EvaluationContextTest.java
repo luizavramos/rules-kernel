@@ -7,7 +7,6 @@ import br.com.motorfraude.rules.kernel.TestContexts;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-/** T206 — o contexto só aceita o que o catálogo declara, com o tipo certo, e exige todas as features. */
 class EvaluationContextTest {
 
     @Test

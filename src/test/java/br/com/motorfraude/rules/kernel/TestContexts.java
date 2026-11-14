@@ -2,7 +2,6 @@ package br.com.motorfraude.rules.kernel;
 
 import br.com.motorfraude.rules.kernel.evaluation.EvaluationContext;
 
-/** Contexto neutro com todas as features do catálogo; cada teste muda só o que importa. */
 public final class TestContexts {
 
     private TestContexts() {}

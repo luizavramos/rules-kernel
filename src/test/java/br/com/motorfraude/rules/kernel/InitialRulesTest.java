@@ -24,7 +24,6 @@ import org.junit.jupiter.api.TestFactory;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.json.JsonMapper;
 
-/** T208 / SC-003 — as 8 regras iniciais (plano 002, §5) compilam e, cada uma, dispara e não dispara nos casos dados. */
 class InitialRulesTest {
 
     private static final JsonNode ROOT = load();

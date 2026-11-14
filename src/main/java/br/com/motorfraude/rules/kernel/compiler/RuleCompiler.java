@@ -27,19 +27,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * Compila e valida regras contra o catálogo de features. Os erros saem em português, com o nome da feature ou do
- * parâmetro, e todos juntos. O custo da expressão é limitado por número de nós e profundidade (o cel-java não tem
- * estimador de custo; ver SPIKE.md).
- */
 public final class RuleCompiler {
 
     public static final int DEFAULT_MAX_NODES = 200;
     public static final int DEFAULT_MAX_DEPTH = 24;
-    /** Tamanho máximo do texto da expressão, em caracteres. */
     public static final int MAX_EXPRESSION_LENGTH = 2000;
 
-    /** Nome da função própria, declarada no compilador e implementada no avaliador. */
     static final String MAX_FUNCTION = "max";
     static final String MAX_OVERLOAD = "max_int_int";
 
@@ -67,10 +60,6 @@ public final class RuleCompiler {
                 .build();
     }
 
-    /**
-     * Compila as regras ACTIVE e SHADOW do conjunto (DRAFT e DISABLED não entram). Se qualquer uma falhar, lança
-     * {@link RuleSetCompilationException} com o erro de cada uma: o conjunto nunca é publicado pela metade.
-     */
     public CompiledRuleSet compileAll(RuleSetDefinition set) {
         var scoring = set.scoring();
         if (scoring == null || scoring.mediumThreshold() <= 0 || scoring.mediumThreshold() > scoring.highThreshold()) {
@@ -155,7 +144,6 @@ public final class RuleCompiler {
         return true;
     }
 
-    /** Nomes antes do verificador de tipos, para a mensagem dizer qual feature ou parâmetro não existe. */
     private void checkNames(CelNavigableExpr root, RuleDefinition rule, Set<String> errors) {
         var definedParams = rule.params() == null ? Set.<String>of() : rule.params().keySet();
         root.allNodes().forEach(node -> {
@@ -216,7 +204,6 @@ public final class RuleCompiler {
         return new CompilationResult(rule.ruleId(), List.copyOf(errors));
     }
 
-    /** Só é chamado depois de conferir que não há erro, então a exceção do CEL não ocorre. */
     private static dev.cel.common.CelAbstractSyntaxTree astOf(CelValidationResult result) {
         try {
             return result.getAst();

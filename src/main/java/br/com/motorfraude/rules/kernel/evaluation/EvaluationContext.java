@@ -7,10 +7,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.TreeSet;
 
-/**
- * Valores das features de uma transação, validados contra o catálogo: só nomes conhecidos, com o tipo certo, e
- * todas presentes. Inteiros viram {@code long} (o inteiro do CEL).
- */
 public final class EvaluationContext {
 
     public static final String SEGMENT = "profile.segment";
@@ -25,12 +21,10 @@ public final class EvaluationContext {
         return new Builder();
     }
 
-    /** Nome qualificado ({@code tx.amount}) para o valor. */
     public Map<String, Object> values() {
         return values;
     }
 
-    /** Segmento do cliente (PF, PJ), usado para escolher os parâmetros efetivos de cada regra. */
     public String segment() {
         return (String) values.get(SEGMENT);
     }

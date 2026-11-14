@@ -4,13 +4,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * O vocabulário das regras: as únicas variáveis que uma expressão pode usar (plano 002, §3.1).
- * Uma feature nova exige código no motor, por isso é a única mudança de regra que pede deploy.
- */
 public final class FeatureCatalog {
 
-    /** Grupo reservado para os parâmetros da própria regra (mapa aberto). */
     public static final String PARAMS = "params";
 
     private static final FeatureCatalog STANDARD = standard();
@@ -29,12 +24,10 @@ public final class FeatureCatalog {
         return STANDARD;
     }
 
-    /** Nome qualificado (ex.: {@code features.count5m}) para o tipo. */
     public Map<String, FeatureType> features() {
         return features;
     }
 
-    /** Grupos conhecidos: tx, profile, features, lists. */
     public Set<String> groups() {
         return groups;
     }

@@ -16,11 +16,6 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * Conjunto compilado, pronto para avaliar. Imutável e seguro para uso por várias threads. Só as regras ACTIVE somam
- * pontos; as SHADOW são avaliadas e devolvidas à parte. Uma regra que falha vira {@link RuleError} e conta como não
- * disparada: uma regra nunca derruba a decisão.
- */
 public final class CompiledRuleSet {
 
     private static final Pattern PLACEHOLDER = Pattern.compile("\\{([A-Za-z]+\\.[A-Za-z0-9]+)}");
@@ -80,7 +75,6 @@ public final class CompiledRuleSet {
         return score >= scoring.mediumThreshold() ? Severity.MEDIUM : Severity.NONE;
     }
 
-    /** Parâmetros da regra, sobrescritos pelo override do segmento do cliente. Inteiros viram long (o int do CEL). */
     static Map<String, Object> effectiveParams(RuleDefinition rule, String segment) {
         var params = new HashMap<String, Object>();
         if (rule.params() != null) {

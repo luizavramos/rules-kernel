@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/** T204 — compilação: sintaxe, tipos contra o catálogo, parâmetros e limites de complexidade. */
 class RuleCompilerTest {
 
     private final RuleCompiler compiler = new RuleCompiler();
