@@ -13,7 +13,7 @@
 
     <artifactId>rules-kernel</artifactId>
     <name>rules-kernel</name>
-    <description>Linguagem de regras compartilhada: modelo, catálogo de features e compilador/avaliador CEL (spec 002).</description>
+    <description>Linguagem de regras compartilhada: modelo, catálogo de features e compilador/avaliador CEL.</description>
 
     <properties>
         <cel.version>0.15.0</cel.version>
